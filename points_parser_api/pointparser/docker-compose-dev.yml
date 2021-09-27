@@ -10,7 +10,7 @@ services:
       dockerfile: ./Dockerfiles/postgres/Dockerfile
     restart: always
     ports:
-      - 5532:5432
+      - 5422:5432
     volumes:
       - dbpointparserdev:/var/lib/postgresql/data
     networks:
@@ -47,7 +47,7 @@ services:
     restart: always
     command: redis-server
     ports:
-      - 6479:6379
+      - 6369:6379
     networks:
       - networkpointparserdev
 
@@ -128,7 +128,7 @@ services:
       - FLOWER_URL_PREFIX=dev/flower
     command: [ "flower", "--broker=redis://:@redisbrokerpointparserdev:6379/0", "--enable_events=False", "–logging=DEBUG", "--port=5555" ]
     ports:
-      - 55510:5555
+      - 5545:5555
     networks:
       - networkpointparserdev
 

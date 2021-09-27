@@ -2,158 +2,138 @@ version: '3'
 
 services:
 
-  aqualifedbprod:
-    container_name: aqualifedbprod
-    image: aqualifedbprod
+  dbpointparserprod:
+    container_name: dbpointparserprod
+    image: dbpointparserprod
     build:
       context: ./
       dockerfile: ./Dockerfiles/postgres/Dockerfile
     restart: always
     ports:
-      - 5332:5432
+      - 5432:5432
     volumes:
-      - db-prod:/var/lib/postgresql/data
+      - dbpointparserdev:/var/lib/postgresql/data
     networks:
-      - aqualife
+      - networkpointparserprod
 
-  aqualifeapiprod:
-    container_name: aqualifeapiprod
-    image: aqualifeapiprod
+  apipointparserprod:
+    container_name: apipointparserprod
+    image: apipointparserprod
     build:
       context: ./
       dockerfile: ./Dockerfiles/flask/Dockerfile
     restart: always
     depends_on:
-      - aqualifedbprod
+      - dbpointparserprod
     environment:
       - FLASK_CONFIG=production
-      - PROD_CELERY_BROKER_URL=redis://redisbrokeraqualifeprod:6379/0
-      - PROD_RESULT_BACKEND=redis://redisbrokeraqualifeprod:6379/1
-      - PROD_DATABASE_URL=postgresql://${SNEG_DB_USER}:${SNEG_DB_PASSWORD}@aqualifedbprod:5432/sneg
+      - PROD_CELERY_BROKER_URL=redis://redisbrokerpointparserprod:6379/0
+      - PROD_RESULT_BACKEND=redis://redisbrokerpointparserprod:6379/1
+      - PROD_DATABASE_URL=postgresql://${SNEG_DB_USER}:${SNEG_DB_PASSWORD}@dbpointparserprod:5432/sneg
       - YANDEX_API_TOKEN=${YANDEX_API_TOKEN}
       - SEARCH_MAP_TOKEN=${SEARCH_MAP_TOKEN}
-      - DADATA_TOKEN=${DADATA_TOKEN}
-      - DADATA_SECRET=${DADATA_SECRET}
-      - DADATA_USER=${DADATA_USER}
-      - DADATA_PASS=${DADATA_PASS}
-      - B2BCHGK_TOKEN=${B2BCHGK_TOKEN}
-    command: sh -c "sh ./sh/wait-for.sh --timeout=600 aqualifedbprod:5432 -- sh ./sh/boot.sh"
+    command: sh -c "sh ./sh/wait-for.sh --timeout=600 dbpointparserprod:5432 -- sh ./sh/boot.sh"
     ports:
       - 5000:5000
     networks:
-      - aqualife
+      - networkpointparserprod
 
-  redisbrokeraqualifeprod:
-    container_name: redisbrokeraqualifeprod
-    image: redisbrokeraqualifeprod
+  redisbrokerpointparserprod:
+    container_name: redisbrokerpointparserprod
+    image: redisbrokerpointparserprod
     build:
       context: ./
       dockerfile: ./Dockerfiles/redis/Dockerfile
     restart: always
     command: redis-server
     ports:
-      - 6279:6379
+      - 6379:6379
     networks:
-      - aqualife
+      - networkpointparserprod
 
-  celerybeataqualifeprod:
-    container_name: celerybeataqualifeprod
-    image: celerybeataqualifeprod
+  celerybeatpointparserprod:
+    container_name: celerybeatpointparserprod
+    image: celerybeatpointparserprod
     build:
       context: ./
       dockerfile: ./Dockerfiles/flask/Dockerfile
     restart: always
     depends_on:
-      - redisbrokeraqualifeprod
+      - redisbrokerpointparserprod
     environment:
       - FLASK_CONFIG=production
-      - PROD_CELERY_BROKER_URL=redis://redisbrokeraqualifeprod:6379/0
-      - PROD_RESULT_BACKEND=redis://redisbrokeraqualifeprod:6379/1
-      - PROD_DATABASE_URL=postgresql://${SNEG_DB_USER}:${SNEG_DB_PASSWORD}@aqualifedbprod:5432/sneg
+      - PROD_CELERY_BROKER_URL=redis://redisbrokerpointparserprod:6379/0
+      - PROD_RESULT_BACKEND=redis://redisbrokerpointparserprod:6379/1
+      - PROD_DATABASE_URL=postgresql://${SNEG_DB_USER}:${SNEG_DB_PASSWORD}@dbpointparserprod:5432/sneg
       - YANDEX_API_TOKEN=${YANDEX_API_TOKEN}
       - SEARCH_MAP_TOKEN=${SEARCH_MAP_TOKEN}
-      - DADATA_TOKEN=${DADATA_TOKEN}
-      - DADATA_SECRET=${DADATA_SECRET}
-      - DADATA_USER=${DADATA_USER}
-      - DADATA_PASS=${DADATA_PASS}
-      - B2BCHGK_TOKEN=${B2BCHGK_TOKEN}
     command: [ "celery", "--app=app.celery.celery_app.celery_app", "beat", "--loglevel=DEBUG" ]
     networks:
-      - aqualife
+      - networkpointparserprod
 
-  celeryscheduleraqualifeprod:
-    container_name: celeryscheduleraqualifeprod
-    image: celeryscheduleraqualifeprod
+  celeryschedulerpointparserprod:
+    container_name: celeryschedulerpointparserprod
+    image: celeryschedulerpointparserprod
     build:
       context: ./
       dockerfile: ./Dockerfiles/flask/Dockerfile
     restart: always
     depends_on:
-      - redisbrokeraqualifeprod
+      - redisbrokerpointparserprod
     environment:
       - FLASK_CONFIG=production
-      - PROD_CELERY_BROKER_URL=redis://redisbrokeraqualifeprod:6379/0
-      - PROD_RESULT_BACKEND=redis://redisbrokeraqualifeprod:6379/1
-      - PROD_DATABASE_URL=postgresql://${SNEG_DB_USER}:${SNEG_DB_PASSWORD}@aqualifedbprod:5432/sneg
+      - PROD_CELERY_BROKER_URL=redis://redisbrokerpointparserprod:6379/0
+      - PROD_RESULT_BACKEND=redis://redisbrokerpointparserprod:6379/1
+      - PROD_DATABASE_URL=postgresql://${SNEG_DB_USER}:${SNEG_DB_PASSWORD}@dbpointparserprod:5432/sneg
       - YANDEX_API_TOKEN=${YANDEX_API_TOKEN}
       - SEARCH_MAP_TOKEN=${SEARCH_MAP_TOKEN}
-      - DADATA_TOKEN=${DADATA_TOKEN}
-      - DADATA_SECRET=${DADATA_SECRET}
-      - DADATA_USER=${DADATA_USER}
-      - DADATA_PASS=${DADATA_PASS}
-      - B2BCHGK_TOKEN=${B2BCHGK_TOKEN}
     command: [ "celery", "--app=app.celery.celery_app.celery_app", "worker", "--hostname=scheduler", "--loglevel=DEBUG", "--max-tasks-per-child=1", "--concurrency=4", "--without-gossip", "--without-mingle", "--task-events", "-Ofair", "--queues=schedulerq" ]
     networks:
-      - aqualife
+      - networkpointparserprod
 
-  celeryworkeraqualifeprod:
-    container_name: celeryworkeraqualifeprod
-    image: celeryworkeraqualifeprod
+  celeryworkerpointparserprod:
+    container_name: celeryworkerpointparserprod
+    image: celeryworkerpointparserprod
     build:
       context: ./
       dockerfile: ./Dockerfiles/flask/Dockerfile
     restart: always
     depends_on:
-      - redisbrokeraqualifeprod
+      - redisbrokerpointparserprod
     environment:
       - FLASK_CONFIG=production
-      - PROD_CELERY_BROKER_URL=redis://redisbrokeraqualifeprod:6379/0
-      - PROD_RESULT_BACKEND=redis://redisbrokeraqualifeprod:6379/1
-      - PROD_DATABASE_URL=postgresql://${SNEG_DB_USER}:${SNEG_DB_PASSWORD}@aqualifedbprod:5432/sneg
+      - PROD_CELERY_BROKER_URL=redis://redisbrokerpointparserprod:6379/0
+      - PROD_RESULT_BACKEND=redis://redisbrokerpointparserprod:6379/1
+      - PROD_DATABASE_URL=postgresql://${SNEG_DB_USER}:${SNEG_DB_PASSWORD}@dbpointparserprod:5432/sneg
       - YANDEX_API_TOKEN=${YANDEX_API_TOKEN}
       - SEARCH_MAP_TOKEN=${SEARCH_MAP_TOKEN}
-      - DADATA_TOKEN=${DADATA_TOKEN}
-      - DADATA_SECRET=${DADATA_SECRET}
-      - DADATA_USER=${DADATA_USER}
-      - DADATA_PASS=${DADATA_PASS}
-      - B2BCHGK_TOKEN=${B2BCHGK_TOKEN}
     command: [ "celery", "--app=app.celery.celery_app.celery_app", "worker", "--hostname=worker", "--loglevel=DEBUG", "--max-tasks-per-child=1", "--concurrency=20", "--without-gossip", "--without-mingle", "--task-events", "-Ofair", "--queues=workerq" ]
     networks:
-      - aqualife
+      - networkpointparserprod
 
-  floweraqualifeprod:
-    container_name: floweraqualifeprod
-    image: floweraqualifeprod
+  flowerpointparserprod:
+    container_name: flowerpointparserprod
+    image: flowerpointparserprod
     build:
       context: ./
       dockerfile: ./Dockerfiles/flower/Dockerfile
     restart: always
     depends_on:
-      - redisbrokeraqualifeprod
-      - celerybeataqualifeprod
-      - celeryscheduleraqualifeprod
-      - celeryworkeraqualifeprod
+      - redisbrokerpointparserprod
+      - celerybeatpointparserprod
+      - celeryschedulerpointparserprod
+      - celeryworkerpointparserprod
     environment:
       - FLOWER_PORT=5555
       - FLOWER_URL_PREFIX=flower
-    command: [ "flower", "--broker=redis://:@redisbrokeraqualifeprod:6379/0", "--enable_events=False", "–logging=DEBUG", "--port=5555" ]
+    command: [ "flower", "--broker=redis://:@redisbrokerpointparserprod:6379/0", "--enable_events=False", "–logging=DEBUG", "--port=5555" ]
     ports:
       - 5555:5555
     networks:
-      - aqualife
+      - networkpointparserprod
 
 volumes:
-  db-prod:
+  dbpointparserdev:
 
 networks:
-  aqualife:
+  networkpointparserprod:
