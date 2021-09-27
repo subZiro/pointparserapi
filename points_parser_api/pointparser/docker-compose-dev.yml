@@ -1,0 +1,139 @@
+version: '3'
+
+services:
+
+  dbpointparserdev:
+    container_name: dbpointparserdev
+    image: dbpointparserdev
+    build:
+      context: ./
+      dockerfile: ./Dockerfiles/postgres/Dockerfile
+    restart: always
+    ports:
+      - 5532:5432
+    volumes:
+      - dbpointparserdev:/var/lib/postgresql/data
+    networks:
+      - networkpointparserdev
+
+  apipointparserdev:
+    container_name: apipointparserdev
+    image: apipointparserdev
+    build:
+      context: ./
+      dockerfile: ./Dockerfiles/flask/Dockerfile
+    restart: always
+    depends_on:
+      - dbpointparserdev
+    environment:
+      - FLASK_CONFIG=development
+      - DEV_CELERY_BROKER_URL=redis://redisbrokerpointparserdev:6379/0
+      - DEV_RESULT_BACKEND=redis://redisbrokerpointparserdev:6379/1
+      - DEV_DATABASE_URL=postgresql://${SNEG_DB_USER}:${SNEG_DB_PASSWORD}@dbpointparserdev:5432/sneg
+      - YANDEX_API_TOKEN=${YANDEX_API_TOKEN}
+      - SEARCH_MAP_TOKEN=${SEARCH_MAP_TOKEN}
+    command: sh -c "sh ./sh/wait-for.sh --timeout=600 dbpointparserdev:5432 -- sh ./sh/boot.sh"
+    ports:
+      - 5010:5000
+    networks:
+      - networkpointparserdev
+
+  redisbrokerpointparserdev:
+    container_name: redisbrokerpointparserdev
+    image: redisbrokerpointparserdev
+    build:
+      context: ./
+      dockerfile: ./Dockerfiles/redis/Dockerfile
+    restart: always
+    command: redis-server
+    ports:
+      - 6479:6379
+    networks:
+      - networkpointparserdev
+
+  celerybeatpointparserdev:
+    container_name: celerybeatpointparserdev
+    image: celerybeatpointparserdev
+    build:
+      context: ./
+      dockerfile: ./Dockerfiles/flask/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - redisbrokerpointparserdev
+    environment:
+      - FLASK_CONFIG=development
+      - DEV_CELERY_BROKER_URL=redis://redisbrokerpointparserdev:6379/0
+      - DEV_RESULT_BACKEND=redis://redisbrokerpointparserdev:6379/1
+      - DEV_DATABASE_URL=postgresql://${SNEG_DB_USER}:${SNEG_DB_PASSWORD}@pointparserdbdev:5432/sneg
+      - YANDEX_API_TOKEN=${YANDEX_API_TOKEN}
+      - SEARCH_MAP_TOKEN=${SEARCH_MAP_TOKEN}
+    command: [ "celery", "--app=app.celery.celery_app.celery_app", "beat", "--loglevel=DEBUG" ]
+    networks:
+      - networkpointparserdev
+
+  celeryschedulerpointparserdev:
+    container_name: celeryschedulerpointparserdev
+    image: celeryschedulerpointparserdev
+    build:
+      context: ./
+      dockerfile: ./Dockerfiles/flask/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - redisbrokerpointparserdev
+    environment:
+      - FLASK_CONFIG=development
+      - DEV_CELERY_BROKER_URL=redis://redisbrokerpointparserdev:6379/0
+      - DEV_RESULT_BACKEND=redis://redisbrokerpointparserdev:6379/1
+      - DEV_DATABASE_URL=postgresql://${SNEG_DB_USER}:${SNEG_DB_PASSWORD}@dbpointparserdev:5432/sneg
+      - YANDEX_API_TOKEN=${YANDEX_API_TOKEN}
+      - SEARCH_MAP_TOKEN=${SEARCH_MAP_TOKEN}
+    command: [ "celery", "--app=app.celery.celery_app.celery_app", "worker", "--hostname=scheduler", "--loglevel=DEBUG", "--max-tasks-per-child=1", "--concurrency=3", "--without-gossip", "--without-mingle", "--task-events", "-Ofair", "--queues=schedulerq" ]
+    networks:
+      - networkpointparserdev
+
+  celeryworkerpointparserdev:
+    container_name: celeryworkerpointparserdev
+    image: celeryworkerpointparserdev
+    build:
+      context: ./
+      dockerfile: ./Dockerfiles/flask/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - redisbrokerpointparserdev
+    environment:
+      - FLASK_CONFIG=development
+      - DEV_CELERY_BROKER_URL=redis://redisbrokerpointparserdev:6379/0
+      - DEV_RESULT_BACKEND=redis://redisbrokerpointparserdev:6379/1
+      - DEV_DATABASE_URL=postgresql://${SNEG_DB_USER}:${SNEG_DB_PASSWORD}@dbpointparserdev:5432/sneg
+      - YANDEX_API_TOKEN=${YANDEX_API_TOKEN}
+      - SEARCH_MAP_TOKEN=${SEARCH_MAP_TOKEN}
+    command: [ "celery", "--app=app.celery.celery_app.celery_app", "worker", "--hostname=worker", "--loglevel=DEBUG", "--max-tasks-per-child=1", "--concurrency=10", "--without-gossip", "--without-mingle", "--task-events", "-Ofair", "--queues=workerq" ]
+    networks:
+      - networkpointparserdev
+
+  flowerpointparserdev:
+    container_name: flowerpointparserdev
+    image: flowerpointparserdev
+    build:
+      context: ./
+      dockerfile: ./Dockerfiles/flower/Dockerfile
+    restart: always
+    depends_on:
+      - redisbrokerpointparserdev
+      - celerybeatpointparserdev
+      - celeryschedulerpointparserdev
+      - celeryworkerpointparserdev
+    environment:
+      - FLOWER_PORT=5555
+      - FLOWER_URL_PREFIX=dev/flower
+    command: [ "flower", "--broker=redis://:@redisbrokerpointparserdev:6379/0", "--enable_events=False", "–logging=DEBUG", "--port=5555" ]
+    ports:
+      - 55510:5555
+    networks:
+      - networkpointparserdev
+
+volumes:
+  dbpointparserdev:
+
+networks:
+  networkpointparserdev:
