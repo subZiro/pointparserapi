@@ -58,4 +58,7 @@ api проекта PointParser v 1.01
 ```
 
 
+##### Скриншот api
+![Скриншот к проекту](https://github.com/subZiro/pointparserapi/blob/master/points_parser_api/screenshot.png)
+
 ----
