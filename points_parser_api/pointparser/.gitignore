@@ -1,0 +1,48 @@
+*.py[cod]
+.idea
+# C extensions
+*.so
+*.swp
+# Packages
+*.egg
+*.egg-info
+*.xlsx
+*.xlsx#
+dist
+build
+eggs
+parts
+bin
+var
+sdist
+develop-eggs
+.installed.cfg
+lib
+lib64
+__pycache__
+tmp
+# Installer logs
+pip-log.txt
+
+# Unit test / coverage reports
+.coverage
+.tox
+nosetests.xml
+
+# Translations
+*.mo
+
+# Mr Developer
+.env
+celerybeat.pid
+celerybeat-schedule
+
+json_types_from_grisha
+launch.txt
+venv
+
+# using in selenium scraping
+geckodriver.log
+
+# Sphinx documentation
+docs/_build/
